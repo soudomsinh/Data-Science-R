@@ -1,0 +1,309 @@
+---
+title: "Final_project"
+author: "Sengdao_&_Alice "
+date: "2022-10-19"
+output: html_document
+---
+
+```{r}
+#install.packages("skimr")
+#install.packages("leaflet")
+#install.packages("tidyverse")
+#install.packages("ggplot2")
+#install.packages("sf")
+#install.packages("psych")
+# install.packages("maps")
+# install.packages("mapdata")
+#install.packages("maps")
+#install.packages("mapdata")
+#install.packages("htmltools")
+#install.packages("ggcorrplot")
+#install.packages("RColorBrewer")
+```
+
+```{r}
+library(leaflet)
+library(tidyverse)
+library(skimr)
+library(maps)
+library(mapdata)
+library(ggplot2)
+library(sf)
+library(psych)
+library(htmltools) 
+library(ggcorrplot)
+library(RColorBrewer)
+```
+
+```{r}
+California_housing <- read_csv("data/California_housing .csv")
+
+# states <- map_data("states") # or state
+# cali <- states %>%
+#   filter(region == "california")
+# link to more info about california housing price dataset https://developers.google.com/machine-learning/crash-course/california-housing-data-description
+
+```
+
+
+```{r}
+states <- st_as_sf(map("state", plot = F, fill = TRUE))
+
+Cali <- states[4,] # To get california
+```
+
+
+```{r}
+glimpse(California_housing)
+```
+
+```{r}
+California_housing <- California_housing %>% 
+mutate(house_value_thousand = median_house_value / 10^3) 
+head(California_housing)
+```
+
+
+```{r}
+California_housing %>% 
+  ggplot(aes(x= house_value_thousand))+
+  geom_histogram()+
+  labs(x = " Median house value (in thoudsand USD)",
+       y = "")
+
+California_housing %>% 
+  ggplot(aes(x= house_value_thousand))+
+  geom_density()+
+  labs(x = " Median house value (in thoudsand USD)",
+       y = "")
+
+
+California_housing %>% ggplot( aes(x= house_value_thousand, fill= ocean_proximity))+
+  geom_histogram(aes(y=..density..), alpha=0.5,
+  position = "identity")+
+  geom_density(alpha=.3)+
+  facet_grid(ocean_proximity~.)+
+  theme_bw()
+```
+
+```{r}
+par(mfrow=c(2,3))
+hist(California_housing$house_value_thousand, breaks = 20, col="skyblue", main="House values in California", xlab = "Price range")
+hist(California_housing$median_income, breaks = 20, col="skyblue", main="Median income in California", xlab = "income ...")
+hist(California_housing$housing_median_age, breaks = 20, col="skyblue", main="housing_median_age in California", xlab = "Age range")
+hist(California_housing$latitude, breaks = 20, col="skyblue", main="Latitude", xlab = "")
+hist(California_housing$longitude, breaks = 20, col="skyblue", main="Longitude", xlab = "")
+```
+
+
+
+```{r}
+California_housing %>% 
+  ggplot(aes(x= ocean_proximity, y= house_value_thousand))+
+  geom_boxplot()+
+  geom_hline(aes(yintercept = mean(house_value_thousand)), color = "blue", linetype = "dashed", lwd = 1)+
+  stat_summary(fun = mean, geom = "point", col = "red") +  # Add points to plot
+  stat_summary(fun = mean, geom = "text", col = "red",     # Add text to plot
+               vjust = 1.5, aes(label = paste("Mean:", round(..y.., digits = 1)))) +
+  labs(title = "box plot of house values in California",
+       subtitle = "by ocean proximity",
+       x = "ocean proximity",
+       y= " house values in thoudsand USD")
+ggsave("myboxplot.png")
+```
+
+```{r,fig.alt= "The table shows the mean of house value is 206 thousand of USD, income of householder is 3.87 (tens of thousands of USD), and house age is 28.6 years. The median of house value is 179.7, household income is 3.53 and house age is 29. The Max of house value is around 500, household income is 15, and house age is 52 years. The minimum of house value is 15, household income is 0.49 and house age is 1 year."}
+mytable <- California_housing %>% 
+  summarise(avg_house_values = mean(house_value_thousand),
+            avg_house_age = mean(housing_median_age),
+            avg_income = mean(median_income),
+            Max_house_values = max(house_value_thousand),
+            Max_house_age = max(housing_median_age),
+            Max_income = max(median_income),
+            Min_house_values = min(house_value_thousand),
+            Min_house_age = min(housing_median_age),
+            Min_income = min(median_income),
+            Median_house_values = median(house_value_thousand),
+            Median_house_age = median(housing_median_age),
+            Median_income = median(median_income),)
+
+glimpse(mytable)
+```
+
+```{r}
+mytable %>% 
+  pivot_longer(avg_house_values: Median_income, names_to = "Names", values_to = "Value") 
+```
+
+
+```{r}
+describe(California_housing)
+```
+
+
+
+```{r, fig.alt = "This is the map of CA with median house value and their locations, and color shows the value of house, from red to blue value become less. The size of points mean the distance between ocean and house. In the map, the higher house values concentrate around California metropolitan area like San Francisco, Los Angeles, San Diego to a lesser extent Sacramento."}
+California_housing %>% 
+  ggplot(aes(x = longitude,
+             y = latitude,
+             color = house_value_thousand))+
+  geom_point(alpha = 1)+
+  scale_color_gradient(low="dodgerblue1", high="firebrick1")+
+  labs(title = "Location of the houses with it value",
+       subtitle = "in California Sate",
+       x = "Longitude", y = "Latitude",
+       colour = "Median house value 
+       in thoudsand")
+ggsave("calimap1.png")
+
+California_housing %>% 
+  ggplot(aes(x = longitude,
+             y = latitude,
+             color = ocean_proximity))+
+  geom_point(alpha = 0.5)+
+  labs(title = "Location of the houses with its value",
+       subtitle = "in California Sate",
+       x = "Longitude", y = "Latitude",
+       colour = "Ocean proximity 
+            from the house")
+ggsave("calimap2.png")
+
+us_map<-subset(map_data("state"), region == "california")
+cali_map <- ggplot(data = us_map, mapping = aes(x = long, y = lat)) + 
+  coord_fixed(1.3) + 
+  geom_polygon(colour="black", fill="white")
+
+cali_house_map = cali_map+
+  geom_point(data = California_housing, aes(x= longitude, 
+                                            y= latitude, 
+                                            color= house_value_thousand, 
+                                            size = ocean_proximity), alpha=0.4)+
+  theme()+
+  xlab("Longitude")+ylab("Latitude")+
+  ggtitle("Map of California: Ocean proximity and House Value")+
+  scale_color_gradient(low="dodgerblue1", high="firebrick1")+
+  geom_text(x=-122.5, y=37.5, label= "San Francisco")+
+  geom_text(x=-118.2, y= 34.0, label = "Los Angeles")+
+  geom_text(x=-121.4, y= 38.5, label = "Sacramento")+
+  geom_text(x=-117.1, y= 32.7, label = "San Diego")+
+  geom_text(x=-119.7, y= 36.7, label = "Fresno")+
+  geom_text(x=-124.1, y= 40.8, label = "Eureka")+
+  geom_text(x=-120.0, y= 39.0, label = "Lake Tahoe")+
+  geom_text(x=-118.4, y= 33.3, label = "Santa Catalina")+
+  geom_text(x=-117.8, y= 33.6, label = "Balboa Island")
+ggsave("calimap3.png")
+cali_house_map
+```
+
+
+```{r}
+labels <- sprintf("Median house price: $%gk<br/> Location of houses: %s",
+                  California_housing$house_value_thousand, 
+                  California_housing$ocean_proximity) %>%  
+                  lapply(htmltools::HTML)
+
+pal_ocean <- colorFactor(palette = "OrRd", domain = California_housing$ocean_proximity, levels = unique(California_housing$ocean_proximity))
+```
+
+
+```{r, fig.alt = "The interactive map which in each point there are value of house and their distance to the ocean."}
+leaflet(California_housing) %>% 
+  addProviderTiles(providers$OpenStreetMap) %>%
+  addCircleMarkers(lng = ~longitude, lat = ~latitude, clusterOptions = markerClusterOptions(),
+                   popup =  labels,
+                   color = ~pal_ocean(California_housing$ocean_proximity)) %>%
+  addPolygons(data = Cali) %>%
+  addLegend(position = "bottomright",
+          pal = pal_ocean,
+         values = ~California_housing$ocean_proximity,
+        title = "Ocean Proximity",
+       opacity = 1)
+
+```
+
+
+
+```{r, fig.alt = "The bar plot shows the distribution of house value by ocean proximity and the house value was been group by “0-200k”,  “200-300k”, “300-400k”, “400-500k”, and over 500k (USD). In the 0-200k level of house value the inland house has the highest percentage, then comparing to other level of house value the most of inlands house are in the 0-200k level. If comparing the houses which are smaller than 1h drive in each level, we found the percentage is close in each level."}
+California_housing %>% 
+  mutate(area_of_value = case_when(house_value_thousand < 200 ~ "0-200k", 
+                                   house_value_thousand >= 200 & house_value_thousand < 300 ~ "200-300k",
+                                   house_value_thousand >= 300 & house_value_thousand < 400 ~ "300-400k",
+                                   house_value_thousand >= 400 & house_value_thousand < 500 ~ "400-500k",
+                                   house_value_thousand >= 500 ~ "500k(≥)")) %>% ggplot(aes(x = fct_rev(area_of_value), fill= fct_infreq(ocean_proximity)))+
+  geom_bar()+
+  coord_flip()+
+  labs(title = "House value by the ocean proximity",
+       subtitle = "in California Sate",
+       x = "House value(kUSD)", y = "Number of houses",
+       fill = "Ocean pproximity")
+```
+
+```{r, fig.alt = "Scatterplot shows relationship of median income of householders and house value by ocean proximity. The householders income and house value has approximately positive relationship(Except island houses, the data of island house is not enough for find relationship), but there is a difference in distribution and comparing to inland and others it start increasing faster than others."}
+California_housing %>% 
+  mutate(alpha_loc = case_when(ocean_proximity == "ISLAND" ~ 1,
+                           TRUE ~ 0.1)) %>%
+  ggplot(aes(x= median_income, 
+             y = house_value_thousand, 
+             color = ocean_proximity))+
+  geom_point(aes(alpha = alpha_loc))+
+  guides(alpha = "none")+
+  scale_y_log10()+
+  geom_smooth(color = "darkorchid1")+
+  facet_wrap(~ocean_proximity)+
+  labs(title = "Relationship of median income of households and house value",
+       subtitle = "By Oceab Proximity",
+       x = "Median income", 
+       y = " Median house value (in thoudsand USD)",
+       color = "Ocean Proximity")
+```
+
+
+
+
+
+```{r}
+California_housing %>% 
+  mutate(alpha_loc = case_when(ocean_proximity == "ISLAND" ~ 1,
+                           TRUE ~ 0.1)) %>%
+  ggplot(aes(y= house_value_thousand, 
+             x= housing_median_age, 
+             color = ocean_proximity))+
+  geom_point(aes(alpha = alpha_loc))+
+  guides(alpha = "none")+
+  geom_smooth(color = "darkorchid1")+
+  facet_wrap(~ocean_proximity)+
+  labs(title = "Relationships of House value and House age",
+       subtitle = "by the ocean proximity",
+       y = "Median house value (in thoudsand USD)", 
+       x = "Median house age",
+       color = "Ocean Proximity")
+```
+
+
+
+```{r}
+California_housing %>% 
+  ggplot(aes(x= households, y = total_rooms))+
+  geom_point(alpha = 0.5)+
+  geom_smooth(color = "darkorchid1")+
+  facet_wrap(~ocean_proximity)
+  
+```
+
+
+
+
+```{r, fig.alt = "Correlation chart with each variables shows by color and number. From 1 to 0 to -1, it’s from red to white to blue. The bigger number means has higher positive correlation, negative number means negative correlation between two variables. In the variables of house value is shows 0.69 related with householder’s income, and 0.13 related with total rooms, 0.11 related with  house age, and for other variables are close to 0."}
+corr=cor(na.omit(California_housing[1:9]))
+
+cali_house_corrplot <- ggcorrplot(corr,
+           type="upper",
+           outline.col="lightgrey",
+           ggtheme = ggplot2::theme_gray,
+           title= "Correlation Between\n Housing Features",
+          colors = c("#6D9EC1", "white", "#E46726"),
+          lab = TRUE) # add the numeric values on the plot
+ggsave("cali_house_corrplot.png")
+cali_house_corrplot
+```
+

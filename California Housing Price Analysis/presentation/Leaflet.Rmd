@@ -1,0 +1,99 @@
+---
+title: "Final_project"
+author: "Sengdao_&_Alice "
+date: "2022-10-19"
+output: html_document
+---
+
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+#install.packages("skimr")
+#install.packages("leaflet")
+#install.packages("tidyverse")
+#install.packages("ggplot2")
+#install.packages("sf")
+#install.packages("psych")
+# install.packages("maps")
+# install.packages("mapdata")
+
+
+```
+
+```{r}
+library(leaflet)
+library(tidyverse)
+library(skimr)
+library(maps)
+library(mapdata)
+library(ggplot2)
+library(sf)
+library(psych)
+```
+
+```{r}
+California_housing <- read_csv("../data/California_housing .csv")
+# cal_populations_city <- read_csv("../data/cal_populations_city.csv")
+# cal_cities_lat_long <- read_csv("../data/cal_cities_lat_long.csv")
+# cal_populations_county <- read_csv("../data/cal_populations_county.csv")
+
+# states <- map_data("states") # or state
+# cali <- states %>%
+#   filter(region == "california")
+```
+
+
+```{r}
+states <- st_as_sf(map("state", plot = F, fill = TRUE))
+
+Cali <- states[4,] # To get california
+```
+
+
+
+
+
+
+
+```{r}
+California_housing <- California_housing %>% 
+mutate(house_value_thousand = median_house_value / 10^3) 
+
+```
+
+
+```{r}
+library(htmltools)
+```
+
+
+
+```{r}
+labels <- sprintf("Median house price: $%gk<br/> Location of houses: %s",
+                  California_housing$house_value_thousand, California_housing$ocean_proximity) %>%  lapply(htmltools::HTML)
+
+pal_ocean <- colorFactor(palette = "OrRd", domain = California_housing$ocean_proximity, levels = unique(California_housing$ocean_proximity))
+
+
+```
+
+
+```{r}
+leaflet(California_housing) %>% 
+  addProviderTiles(providers$OpenStreetMap) %>%
+  addCircleMarkers(lng = ~longitude, lat = ~latitude, clusterOptions = markerClusterOptions(),
+                   popup =  labels,
+                   color = ~pal_ocean(California_housing$ocean_proximity)) %>%
+  addPolygons(data = Cali) %>%
+  addLegend(position = "bottomright",
+          pal = pal_ocean,
+         values = ~California_housing$ocean_proximity,
+        title = "Ocean Proximity",
+       opacity = 1)
+```
+
+
+
