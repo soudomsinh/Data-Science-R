@@ -1,0 +1,383 @@
+---
+title: "Heart disease Analysis project"
+author: "Sengdao_Oudomsihn"
+date: "4/15/2022"
+output: html_document
+---
+
+The dataset for this statistical analysis was retrieved from the UCI Machine Learning Repository. The dataset for this statistical analysis consists of 303 observations and 14 variables. However, column names for the dataset were not included when the data was imported from the UCI Machine Learning Repository website. Below are columns names I give to the columns according to the UCI Machine Learning Repository website
+
+Age = age in year
+Sex = gender of patients; 1=male, 0=female 
+CP_Type = chest pain type (Typical angina, Atypical angina, Non-anginal pain, Asymptomatic)
+BloodPres = blood pressure (millimeters of mercury (mmHg))
+Cholesterol = serum cholesterol in mg/dl
+ Fasting_BP = fasting blood sugar >120 mg/dl (1=true; 0=false)
+Rest_ECG = resting electrocardiographic results (0=normal, 1= can range from mild symptoms to severe problems, 2: possible or definite left ventricular hypertrophy
+MaxHR = maximum heart rate achieved
+Exercise = Exercise induced angina (1= yes, 0=no) 
+ST_Dep = ST Depression induced by exercise relative to rest 
+Slope_ST =The slope of the peak exercise ST segment (1:upsloping, 2: flat sloping and 3: downsloping
+Num_Vsel = number of major vessels (0-3) 
+Thallium_Stress =  Thallium stress result (3: normal, 6: fixed defect, 7: reversible defect
+HD = Heart disease conditions
+
+
+this statistical analysis aims not to classify the type of heart condition, but on the other hand, the aim of the paper is to investigate whether;
+1. Age has no effect on the heart disease condition of patients
+2. ST-Segment Depression has no effects the ST-elevation of heart rate 
+3. Age and sex are not predictors for heart disease 
+4. ST-segment Depression (ST_Dep) and ST-elevation of heart rate are predictors for different kinds of chest pains
+5. There is no correlation between age and cholesterol
+6. There is no correlation between blood pressure and cholesterol
+7. There is no correlation between age and maximum heart rate
+
+A few types of statistical analysis models will be used to find the answer for hypotheses. These types of statistical analysis models include one-way ANOVA, two-way ANOVA, and linear regression. Each statistical analysis model is unique in its own way, and each is used differently based on the type of data that are being compared. So the hypotheses for this analysis include many types of data. Therefore I will use different statistical analysis models for each hypothesis testing.
+
+
+
+
+# tidyverse package
+```{r}
+# install.packages("tidyverse")
+library(tidyverse)
+```
+
+# referenece source of dataset: https://archive.ics.uci.edu/ml/datasets/Heart+Disease 
+```{r}
+urlfile="https://archive.ics.uci.edu/ml/machine-learning-databases/heart-disease/processed.cleveland.data"
+my_data <- read.csv(urlfile)
+str(my_data)
+```
+# Assign names to the column names
+
+```{r}
+colnames(my_data) <- c("Age","Sex","CP_Type", "BloodPres", "Cholesterol", "Fasting_BP",  "Rest_ECG", "MaxHR", "Exercise",  "ST_Dep", "Slope_ST", "Num_Vsels", "Thallium_Stress", "HD")
+str(my_data)
+```
+
+# Checking if there are  any missing values in the dataset
+```{r}
+## Data cleaning
+any(is.na(my_data)) # check if there is any missing value in the dataset. TRUE mean yes there are missing value in the data frame
+my_data[my_data == "?"] <- NA # Replace "?" in any column with NA
+colSums(is.na(my_data))# which column has missing value
+```
+
+# delete anny missing value that could potentially cause problem for analysis
+```{r}
+my_data <- na.omit(my_data) # omit the missing value in the dataset and save it back to the dateset
+any(is.na(my_data)) # False means no missing value in the dataset
+```
+
+
+
+```{r}
+my_data[my_data$CP_Type == 1,]$CP_Type <- "Typical angina"
+my_data[my_data$CP_Type == 2,]$CP_Type <- "Atypical angina"
+my_data[my_data$CP_Type == 3,]$CP_Type <- "Non-anginal pain"
+my_data[my_data$CP_Type == 4,]$CP_Type <- "Asymptomatic"
+my_data[my_data$Exercise  == 0,]$Exercise  <- "No_Exercise"
+my_data[my_data$Exercise  == 1,]$Exercise  <- "Yes_Exercise"
+my_data[my_data$Slope_ST == 1,]$Slope_ST <- "Upsloping"
+my_data[my_data$Slope_ST == 2,]$Slope_ST <- "Flatsloping"
+my_data[my_data$Slope_ST == 3,]$Slope_ST <- "Downsloping"
+my_data[my_data$Sex == 1,]$Sex <- "Male"
+my_data[my_data$Sex == 0,]$Sex <- "Female"
+my_data[my_data$HD == 0,]$HD <- "Healthy"
+my_data[my_data$HD == 1,]$HD <- "Unhealthy"
+my_data[my_data$HD == 2,]$HD <- "Unhealthy"
+my_data[my_data$HD == 3,]$HD <- "Unhealthy"
+my_data[my_data$HD == 4,]$HD <- "Unhealthy"
+str(my_data)
+```
+
+# convert some variables in the dataset into appropiate data type for analysis
+```{r}
+# Now let's convert some variables into factor
+my_data$Age <- as.integer(my_data$Age)
+my_data$Sex <- as.factor(my_data$Sex)
+my_data$CP_Type <- as.factor(my_data$CP_Type)
+my_data$Fasting_BP <- as.factor(my_data$Fasting_BP)
+my_data$Rest_ECG <- as.factor(my_data$Rest_ECG)
+my_data$Exercise <- as.factor(my_data$Exercise)
+my_data$Slope_ST <- as.factor(my_data$Slope_ST)
+my_data$Num_Vsels <- as.factor(my_data$Num_Vsels)
+my_data$Thallium_Stress <- as.factor(my_data$Thallium_Stress)
+my_data$BloodPres <- as.numeric(my_data$BloodPres)
+my_data$Cholesterol <- as.numeric(my_data$Cholesterol)
+my_data$MaxHR <- as.numeric(my_data$MaxHR)
+my_data$HD <- as.factor(my_data$HD)
+str(my_data)
+```
+# Exploratory Data Analysis
+
+### Histogram to see distribution of data in the dataset
+
+```{r}
+set.seed(123)
+par(mfrow=c(2,3))
+hist(my_data$MaxHR, breaks = 20, col="skyblue", main="Heart Rate Maximum", xlab = "Heart Rate")
+hist(my_data$BloodPres,breaks = 20, col="skyblue", main="Blood Pressure", xlab = "Blood Pressure")
+hist(my_data$Cholesterol, breaks = 20,col="skyblue", main = "Cholesterol Level", xlab = "Cholesterol")
+hist(my_data$Age, breaks = 20, col="skyblue", main = "Age in year", xlab = "Age")
+hist(my_data$ST_Dep, breaks = 20, col="skyblue", main = "ST Depression", xlab = "ST Depressoin")
+```
+#### Figure1: Histogram of distribution of data for maximum heart rate, blood pressure, cholesterol level, age, and ST depression for patients in the dataset. 
+
+
+
+# density of data distribution in chest pain
+
+```{r}
+ggplot(my_data,aes(x=MaxHR, fill=CP_Type))+geom_density(alpha=.5)
+```
+
+
+```{r}
+ggplot(data = my_data, aes(x=MaxHR, color=CP_Type, fill= CP_Type))+
+  geom_histogram(aes(y=..density..), alpha=0.5,
+                 position = "identity")+ 
+  geom_density(alpha=.3)+
+  facet_grid(CP_Type~.)+
+  theme_bw()
+```
+
+
+```{r}
+ggplot(data=my_data)+geom_bar(mapping = aes(x=Sex, fill=HD))
+```
+
+
+```{r}
+my_data %>% group_by(CP_Type) %>% 
+  count() %>% 
+  arrange(desc(n))
+```
+
+```{r}
+my_data %>% 
+  filter(CP_Type=="Asymptomatic") %>% 
+  group_by(HD, Sex, CP_Type) %>% 
+  summarise(avg_HR=mean(MaxHR),
+            median_HR=median(MaxHR),
+            avg_age=mean(Age),
+            median_age=median(Age)
+            )
+```
+
+```{r}
+ggplot(data=my_data)+geom_bar(mapping = aes(x=Sex, fill=HD))+facet_grid(~CP_Type)
+```
+```{r}
+my_data %>% 
+  filter(CP_Type=="Asymptomatic") %>% 
+  group_by(HD, Sex, CP_Type) %>% 
+  summarise_if(is.numeric, median)
+```
+
+
+
+```{r}
+ggplot(data = my_data, aes(x= Sex, y= MaxHR, fill= HD))+geom_boxplot()+
+  facet_grid(.~CP_Type)
+```
+
+
+# Statistical Analysis | Finding insight in data
+
+## ONE-Way ANOVA
+
+```{r}
+# One-Way ANOVA
+boxplot(Age~HD, data=my_data, col='tomato')
+ONE_ANOVA1 <- aov(Age~HD, data=my_data)
+summary(ONE_ANOVA1)
+TukeyHSD(ONE_ANOVA1)
+```
+
+## Older age patients have higer unhealthy heart condition than younger age patients
+Report: "Age of patients are significantly different for heart disease condition(One-way anova, F_1,294=16,52, p<0.0000617)"
+
+
+```{r}
+set.seed(11)
+boxplot(ST_Dep~Slope_ST, data=my_data)
+ONE_ANOVA2 <- aov(ST_Dep~Slope_ST, data = my_data)
+ONE_ANOVA2
+summary(ONE_ANOVA2)
+```
+## Report: "ST Depression differed significantly among the three heart rate slope(One-way ANOVA, F_2,293 =73.73, P>0.0000000000000002 or 2e-16)"
+
+## Two-Way ANOVA
+
+```{r}
+# two-way anova
+boxplot(Age~HD+Sex, data = my_data)
+boxplot(ST_Dep~CP_Type+Slope_ST, data = my_data)
+```
+
+
+```{r}
+set.seed(12)
+TWO_ANOVA1 <- aov(Age~HD*Sex, data = my_data)
+TWO_ANOVA1
+summary(TWO_ANOVA1)
+```
+## Report: A two-way ANOVA analysis showed that heart condition(HD) was significantly affected by age of patients(F_1,292=16.963, p< 0.00051) and sex of patients(F_1,292=8.800, p<0.00326), with no significant different(F_1,292=0.106, p=0.74552)
+
+
+
+
+
+
+```{r}
+set.seed(13)
+TWO_ANOVA2 <- aov(ST_Dep~CP_Type*Slope_ST, data = my_data)
+TWO_ANOVA2
+summary(TWO_ANOVA2)
+```
+## Report: A two-way ANOVA analysis showed that chest pain type(CP_Type) was significantly affected by ST Depression of patients(F_3,284=20.312, p<0.000000000592 or 5.92e-12) and slope of heart rate(Slope_ST) (F_2,284=65.750, p<0.0000000000000002 or 2e-16), with a significant different(F_6,284=4.984, p<0.00014)
+
+
+
+```{r}
+# Chest pain type as prediction for heart disease
+interaction.plot(x.factor=my_data$Sex, trace.factor = my_data$HD,my_data$Age, type="o",pch=16)
+
+# Slope of heart rate as prediction
+interaction.plot(x.factor=my_data$Slope_ST,trace.factor = my_data$CP_Type,my_data$ST_Dep, type="o",pch=16)
+
+```
+
+
+## Linear Regression | Finding trends and correlation in data
+
+```{r}
+set.seed(14)
+linear_model1 <- lm(data = my_data, Cholesterol~Age)
+summary(linear_model1)
+cor.test(my_data$Age, my_data$Cholesterol)
+```
+
+## Report: There was a significant relationship between age and cholesterol level of patients(linear regression, r^2=0.04155, F_1,294=12.75, p=0.0004165). The correlations between these two variables was positive(r=0.2038462)
+
+
+
+```{r}
+# Create linear model prediction for the confidence interval band
+prediction <- predict.lm(linear_model1, data=my_data, interval = 'confidence',level=0.98)
+prediction <- data.frame(prediction)
+prediction$Age <- my_data$Age
+prediction
+```
+
+
+
+```{r}
+plot(Cholesterol~Age, data = my_data)
+abline(lm(Cholesterol~Age, data = my_data))
+lines(prediction$Age, prediction$lwr, col="red",lty=2)
+lines(prediction$Age, prediction$upr, col="red",lty=2)
+```
+
+
+```{r}
+ggplot(data = my_data)+geom_point(mapping = aes(x=Cholesterol, y=BloodPres, color=CP_Type, shape=CP_Type))
+```
+
+
+
+
+
+```{r}
+my_data %>% ggplot(aes(x=Cholesterol, y=BloodPres))+geom_point()+
+  stat_smooth(method = "lm")
+
+# Linear Regression Model
+linear_model2 <- lm(data = my_data, BloodPres~Cholesterol)
+summary(linear_model2)
+# run correlation
+cor.test(my_data$BloodPres, my_data$Cholesterol)
+```
+## Report: There was a significant relationship between cholesterol level and blood pressure(linear regression, r^2=0.01752, F_1,294=5.244, p=0.02273). The correlation between these two varibales was positive(r=0.1323796)
+
+
+
+```{r}
+
+my_data %>% ggplot(aes(x=Age, y=MaxHR))+geom_point()+
+  stat_smooth(method = "lm")
+
+# Linear model for maximum heart rate and cholesterol
+linear_model3 <- lm(data = my_data, MaxHR~Age)
+summary(linear_model3)
+# run correlation test
+cor.test(my_data$MaxHR, my_data$Age)
+```
+## Report: There was a statistically significant relationship age and maximum heart rate(linear regression, r^2=0.1562, F_1,294=54.42, p=1.664e-12). The correlation between these two variables was negative(r=-0.3952039)
+
+
+# Machine Learning Model
+
+```{r}
+library(caret)
+library(randomForest)
+library(xgboost)
+```
+
+
+```{r}
+# data partition/ split data into training and testing
+set.seed(123)
+data_index <- createDataPartition(my_data$HD, p = .8, list = FALSE)
+data_train <-my_data[data_index,]
+data_test <- my_data[-data_index,]
+
+```
+
+## Random Forest machine learning model
+
+```{r}
+
+rf_model <- train(HD ~.,
+                    data= data_test,
+                    method='rf',
+                    metric='Accuracy',
+                    trControl=trainControl(method = 'cv', number = 10))
+
+
+```
+
+
+```{r}
+rf_model
+```
+
+
+
+
+```{r}
+rf_preds <- predict(rf_model, data_test)
+table(rf_preds)
+```
+
+
+```{r}
+plot(rf_preds, col='orange')
+```
+
+
+```{r}
+plot(varImp(rf_model, scale = TRUE))
+```
+
+## Maximum heart rate is the best indicator for predicting heart condition of patients in this dataset as it shown in this visualization.  
+
+```{r}
+confusionMatrix(rf_preds, as.factor(data_test$HD))
+```
+
+
+
+
