@@ -4,7 +4,7 @@ author: "Sengdao Oudomsihn"
 date: "2023-04-26"
 output:
   pdf_document: default
-  
+  html_document: default
 ---
 
 ```{r}
@@ -69,8 +69,6 @@ data_laos %>%
   geom_point()
 ```
 
-
-
 # top five best days (lowest PM2.5)
 ```{r}
 data_laos %>% 
@@ -129,7 +127,7 @@ data_laos %>%
 
 ```{r}
 data_laos %>% 
-  filter(year == 2016 | year == 2021) %>% 
+  # filter(year == 2016 | year == 2021) %>% 
   ggplot(aes(x = as.factor(month(local_date_time)), y =pm2_5, 
              fill = as.factor(year(local_date_time))))+
   geom_boxplot()
