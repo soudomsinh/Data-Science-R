@@ -2,12 +2,14 @@
 title: "PM2.5_Analysis, Laos"
 author: "Sengdao Oudomsihn"
 date: "2023-04-26"
-output: html_document
+output:
+  pdf_document: default
+  
 ---
 
 ```{r}
-install.packages("tidyverse")
-install.packages("lubridate")
+# install.packages("tidyverse")
+# install.packages("lubridate")
 ```
 
 ```{r}
@@ -32,9 +34,134 @@ data_laos
 ```
 
 ```{r}
-data_laos %>% 
+data_laos <-  data_laos %>% 
   mutate(date_time = ISOdate(year, month, day, hour_UTC),
-         local_date_time = date_time + hour_UTC(7),
-         local_hour = hour_UTC(local_date_time))
+         local_date_time = date_time + hours(7),
+         local_hour = hour(local_date_time))
+data_laos
 ```
+# visualize data
+```{r}
+data_laos %>% 
+  ggplot(aes(pm2_5))+
+  geom_histogram()
+```
+
+```{r}
+data_laos %>% 
+  group_by(date(local_date_time)) %>% 
+  summarise(avg_pm2_5 = mean(pm2_5))
+```
+
+
+```{r}
+data_laos %>% 
+  group_by(date(local_date_time)) %>% 
+  summarise(avg_pm2_5 = mean(pm2_5)) %>% 
+  ggplot(aes(avg_pm2_5))+
+  geom_histogram()
+```
+
+
+```{r}
+data_laos %>% 
+  ggplot(aes(x =local_hour, y = pm2_5, color = as.factor(local_hour)))+
+  geom_point()
+```
+
+
+
+# top five best days (lowest PM2.5)
+```{r}
+data_laos %>% 
+  mutate(month = month(local_date_time)) %>% 
+  group_by(month) %>% 
+  summarise(avg_pm2_5 = mean(pm2_5))
+
+
+data_laos %>% 
+  mutate(date = date(local_date_time)) %>% 
+  group_by(date) %>% 
+  summarise(avg_pm2_5 = mean(pm2_5)) %>% 
+  arrange(avg_pm2_5) %>% 
+  top_n(-5) 
+
+
+data_laos %>% 
+  mutate(date = date(local_date_time)) %>% 
+  group_by(date) %>% 
+  summarise(min_pm2_5 = min(pm2_5)) %>% 
+  arrange(min_pm2_5) %>% 
+  top_n(-5) 
+```
+
+# top five worst days (highest PM2.5)
+```{r}
+data_laos %>% 
+  mutate(month = month(local_date_time)) %>% 
+  group_by(year,  month) %>% 
+  summarise(avg_pm2_5 = mean(pm2_5))%>% 
+  arrange(desc(avg_pm2_5)) 
+
+
+data_laos %>% 
+  mutate(date = date(local_date_time)) %>% 
+  group_by(date) %>% 
+  summarise(avg_pm2_5 = mean(pm2_5)) %>% 
+  arrange(desc(avg_pm2_5)) %>% 
+  top_n(5) 
+
+
+data_laos %>% 
+  mutate(date = date(local_date_time)) %>% 
+  group_by(date) %>% 
+  summarise(max_pm2_5 = max(pm2_5)) %>% 
+  arrange(desc(max_pm2_5)) %>% 
+  top_n(5) 
+```
+
+```{r}
+data_laos %>% 
+  mutate(weekdays = weekdays(local_date_time)) %>% 
+  group_by(weekdays) %>% 
+  summarise(avg_pm2_5 = mean(pm2_5))
+```
+
+```{r}
+data_laos %>% 
+  filter(year == 2016 | year == 2021) %>% 
+  ggplot(aes(x = as.factor(month(local_date_time)), y =pm2_5, 
+             fill = as.factor(year(local_date_time))))+
+  geom_boxplot()
+  
+```
+
+#time series
+
+```{r}
+data_laos %>% 
+  mutate(month = month(local_date_time),
+         year = year(local_date_time)) %>% 
+  group_by(year, month) %>% 
+  summarise(avg_pm2_5 = mean(pm2_5)) %>% 
+  ggplot(aes(x = month, y =avg_pm2_5, color = as.factor(year)))+
+  geom_line()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
