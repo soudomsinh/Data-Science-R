@@ -8,4 +8,5 @@ problem with pushing R project to git repository to remote GitHub. Solved by thi
 git remote set-url origin https://your-username@github.com/your-username/your-repository.git
 
 ```
+(replace ```your-username``` with your actual GitHub username)
 Enter username and personal access token when prompts
