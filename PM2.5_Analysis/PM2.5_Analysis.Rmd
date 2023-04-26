@@ -147,6 +147,10 @@ data_laos %>%
 ```
 
 
+```{r}
+x <-  "Hello"
+print(x)
+```
 
 
 
