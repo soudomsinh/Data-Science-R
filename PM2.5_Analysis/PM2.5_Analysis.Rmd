@@ -1,11 +1,40 @@
 ---
-title: "PM2.5_Analysis"
+title: "PM2.5_Analysis, Laos"
 author: "Sengdao Oudomsihn"
 date: "2023-04-26"
 output: html_document
 ---
 
 ```{r}
+install.packages("tidyverse")
+install.packages("lubridate")
+```
 
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+myurl = 'http://berkeleyearth.lbl.gov/air-quality/maps/cities/Laos/Laos.txt'
+data_laos <-  read_tsv(myurl, skip = 8, col_names = FALSE  )
+data_laos
+```
+
+```{r}
+colnames(data_laos) <-  c('year', 'month', 'day', 'hour_UTC', 'pm2_5', 'X6', 'X7' )
+data_laos
+```
+
+```{r}
+data_laos <- data_laos %>%  select(year:pm2_5)
+data_laos
+```
+
+```{r}
+data_laos %>% 
+  mutate(date_time = ISOdate(year, month, day, hour_UTC),
+         local_date_time = date_time + hour_UTC(7),
+         local_hour = hour_UTC(local_date_time))
 ```
 
