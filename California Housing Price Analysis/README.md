@@ -17,7 +17,7 @@ The map in this analys is to show that the greater housing values I re mostly co
 
 ## Presentation
 
-The presentation can be found [on Github](https://docs.google.com/presentation/d/12f2xh5SafPjQClul5EDFCsrc1de9qYNGGKRnJ-9Elig/edit#slide=id.g1840cd26eb2_1_12).
+The presentation can be found [on Github](https://docs.google.com/presentation/d/1dqb4YC7LVhL-3gsfP9_cQ_JvZ_gSLPaQltE8RMo5OL8/edit#slide=id.p)
 
 The leaflet map can be found at this link [on Github](presentation/Leaflet.html)
 
