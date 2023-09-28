@@ -17,7 +17,7 @@ The map in this analys is to show that the greater housing values I re mostly co
 
 ## Presentation
 
-The presentation can be found [on Google Slide](https://docs.google.com/presentation/d/1dqb4YC7LVhL-3gsfP9_cQ_JvZ_gSLPaQltE8RMo5OL8/edit#slide=id.p)
+The project presentation can be found [on Google Slide](https://docs.google.com/presentation/d/1dqb4YC7LVhL-3gsfP9_cQ_JvZ_gSLPaQltE8RMo5OL8/edit#slide=id.p)
 
 
 ## Data 
